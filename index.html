@@ -1,0 +1,969 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="NetSphere Pro — professional ISP management platform for customers, billing, network operations and analytics." />
+    <meta name="color-scheme" content="dark light" />
+    <meta name="theme-color" content="#6366f1" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="NetSphere" />
+    <title>NetSphere Pro — ISP Management</title>
+
+    <link rel="icon" href="assets/icon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="assets/icon.svg" />
+    <link rel="manifest" href="manifest.webmanifest" />
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+
+    <!-- Font Awesome 6 -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" />
+    <!-- Google Fonts: Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
+    <!-- Leaflet -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="" />
+
+    <!-- Design system -->
+    <link rel="stylesheet" href="css/tokens.css?v=2.0.0" />
+    <link rel="stylesheet" href="css/base.css?v=2.0.0" />
+    <link rel="stylesheet" href="css/layout.css?v=2.0.0" />
+    <link rel="stylesheet" href="css/components.css?v=2.0.0" />
+    <link rel="stylesheet" href="css/pages.css?v=2.0.0" />
+
+    <!-- Libraries (defer keeps them out of render path) -->
+    <script defer src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script defer src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script defer src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+</head>
+<body>
+    <a class="skip-link" href="#mainContent">Skip to main content</a>
+
+    <!-- ==================== LOGIN ==================== -->
+    <div id="loginPage">
+        <div class="login-shell">
+            <div class="login-brand">
+                <svg viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg" width="34" height="34" aria-hidden="true">
+                    <rect width="512" height="512" rx="120" fill="url(#brandGrad)" />
+                    <text x="256" y="330" font-size="250" font-family="Arial" font-weight="bold" text-anchor="middle" fill="white">N</text>
+                    <defs>
+                        <linearGradient id="brandGrad" x1="0" y1="0" x2="1" y2="1">
+                            <stop offset="0%" stop-color="#6366f1" />
+                            <stop offset="100%" stop-color="#8b5cf6" />
+                        </linearGradient>
+                    </defs>
+                </svg>
+                <span>NetSphere</span>
+                <em>Pro</em>
+            </div>
+
+            <main class="login-card" aria-labelledby="loginHeading">
+                <header class="login-head">
+                    <h1 id="loginHeading">Sign in</h1>
+                    <p>Access your ISP management workspace.</p>
+                </header>
+
+                <form id="loginForm" novalidate>
+                    <div class="role-switch" role="tablist" aria-label="Sign in as">
+                        <button type="button" class="role-option active" data-role="admin" role="tab" aria-selected="true">
+                            Administrator
+                        </button>
+                        <button type="button" class="role-option" data-role="customer" role="tab" aria-selected="false">
+                            Customer
+                        </button>
+                    </div>
+                    <input type="hidden" id="loginRole" value="admin" />
+
+                    <div class="form-group">
+                        <label for="loginUser">Username</label>
+                        <input type="text" id="loginUser" autocomplete="username" placeholder="Enter your username" required />
+                    </div>
+
+                    <div class="form-group">
+                        <label for="loginPass">Password</label>
+                        <div class="input-shell">
+                            <input type="password" id="loginPass" autocomplete="current-password" placeholder="Enter your password" required />
+                            <button class="peek" id="togglePassword" type="button" aria-label="Show password">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="form-group" id="loginTotpGroup" hidden>
+                        <label for="loginTotp">Authenticator code</label>
+                        <input type="text" id="loginTotp" inputmode="numeric" autocomplete="one-time-code" maxlength="7" placeholder="6-digit code" />
+                    </div>
+
+                    <div class="login-options">
+                        <label class="remember" for="rememberMe">
+                            <input type="checkbox" id="rememberMe" />
+                            <span>Remember me</span>
+                        </label>
+                        <a id="forgotPassword" href="#" role="button">Forgot password?</a>
+                    </div>
+
+                    <div class="error-msg" id="loginError" role="alert">Invalid credentials. Please try again.</div>
+
+                    <button class="btn-login" id="loginBtn" type="submit">
+                        <span>Sign in</span>
+                        <i class="fas fa-arrow-right"></i>
+                    </button>
+                </form>
+
+                <p class="login-register">New to NetSphere? <a id="registerLink" tabindex="0" role="button">Create an account</a></p>
+            </main>
+        </div>
+    </div>
+
+    <!-- ==================== APP ==================== -->
+    <div id="appContainer">
+        <div class="sidebar-backdrop" id="sidebarBackdrop"></div>
+
+        <!-- SIDEBAR -->
+        <aside class="sidebar" id="sidebar" aria-label="Main navigation">
+            <div class="brand">
+                <svg viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg" width="36" height="36" aria-hidden="true">
+                    <rect width="512" height="512" rx="72" fill="url(#brandGrad2)" />
+                    <text x="256" y="320" font-size="240" font-family="Arial" text-anchor="middle" fill="white">N</text>
+                    <defs>
+                        <linearGradient id="brandGrad2" gradientTransform="rotate(45)">
+                            <stop offset="0%" stop-color="#6366f1" />
+                            <stop offset="50%" stop-color="#8b5cf6" />
+                            <stop offset="100%" stop-color="#06b6d4" />
+                        </linearGradient>
+                    </defs>
+                </svg>
+                <span>NetSphere</span>
+            </div>
+            <div class="role-badge" id="sidebarRoleBadge">
+                <i class="fas fa-user-shield"></i> <span id="roleLabel">Admin</span>
+            </div>
+
+            <div class="sidebar-scroll">
+            <div class="nav-section admin-only">Operations</div>
+            <button class="nav-item active admin-only" data-page="dashboard"><i class="fas fa-th-large"></i><span>Dashboard</span></button>
+            <button class="nav-item admin-only" data-page="customers"><i class="fas fa-users"></i><span>Customers</span><span class="badge" id="customerBadge">0</span></button>
+            <button class="nav-item admin-only" data-page="packages"><i class="fas fa-box"></i><span>Packages</span></button>
+            <button class="nav-item admin-only" data-page="billing"><i class="fas fa-file-invoice-dollar"></i><span>Billing</span><span class="badge" id="billingBadge">0</span></button>
+            <button class="nav-item admin-only" data-page="tickets"><i class="fas fa-ticket-alt"></i><span>Tickets</span><span class="badge" id="ticketBadge">0</span></button>
+            <button class="nav-item admin-only" data-page="staff"><i class="fas fa-user-tie"></i><span>Staff</span></button>
+
+            <div class="nav-section admin-only">Infrastructure</div>
+            <button class="nav-item admin-only" data-page="network-ops"><i class="fas fa-network-wired"></i><span>Network Ops</span></button>
+            <button class="nav-item admin-only" data-page="map"><i class="fas fa-map-marked-alt"></i><span>Map</span></button>
+            <button class="nav-item admin-only" data-page="reports"><i class="fas fa-chart-bar"></i><span>Reports</span></button>
+
+            <div class="nav-section admin-only">System</div>
+            <button class="nav-item admin-only" data-page="settings"><i class="fas fa-sliders"></i><span>Settings</span></button>
+            <button class="nav-item admin-only" data-page="activity"><i class="fas fa-history"></i><span>Activity Logs</span></button>
+            <button class="nav-item admin-only" data-page="help"><i class="fas fa-life-ring"></i><span>Help Center</span></button>
+
+            <div class="nav-section customer-only">My Account</div>
+            <button class="nav-item customer-only active" data-page="c-dashboard"><i class="fas fa-home"></i><span>My Dashboard</span></button>
+            <button class="nav-item customer-only" data-page="c-profile"><i class="fas fa-user"></i><span>My Profile</span></button>
+            <button class="nav-item customer-only" data-page="c-payments"><i class="fas fa-credit-card"></i><span>My Payments</span></button>
+            <button class="nav-item customer-only" data-page="c-tickets"><i class="fas fa-ticket-alt"></i><span>My Tickets</span></button>
+            <button class="nav-item customer-only" data-page="c-submit"><i class="fas fa-plus-circle"></i><span>Submit Ticket</span></button>
+            </div>
+
+            <button class="nav-item signout" id="signOutBtn"><i class="fas fa-sign-out-alt"></i><span>Sign Out</span></button>
+        </aside>
+
+        <!-- MAIN -->
+        <main class="main" id="mainContent" tabindex="-1">
+            <header class="topbar">
+                <div style="display:flex; align-items:center; gap:14px;">
+                    <button class="theme-toggle menu-toggle" id="menuToggle" aria-label="Toggle navigation">
+                        <i class="fas fa-bars"></i>
+                    </button>
+                    <h1 id="pageTitle">Dashboard <span>– overview</span></h1>
+                </div>
+                <div class="topbar-right">
+                    <button class="theme-toggle admin-only" id="globalSearchBtn" aria-label="Search workspace (Ctrl+K)"><i class="fas fa-magnifying-glass"></i></button>
+                    <div class="admin-badge" id="headerBadge"><i class="fas fa-crown"></i> <span id="headerRole">Admin</span></div>
+                    <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme"><i class="fas fa-moon"></i></button>
+                    <button class="notif-btn" id="notifToggle" aria-label="Notifications">
+                        <i class="fas fa-bell"></i>
+                        <span class="notif-dot" id="notifDot">0</span>
+                    </button>
+                </div>
+            </header>
+
+            <!-- ============ ADMIN PAGES ============ -->
+
+            <section class="page active" id="page-dashboard">
+                <div class="stats-grid">
+                    <div class="stat-card"><div class="top-row"><span class="label"><i class="fas fa-users"></i> Total Customers</span><span class="icon-circle"><i class="fas fa-user"></i></span></div><div class="value" id="statCustomers">0</div><div class="change" id="statCustomersChange"></div></div>
+                    <div class="stat-card"><div class="top-row"><span class="label"><i class="fas fa-wifi"></i> Active Connections</span><span class="icon-circle"><i class="fas fa-signal"></i></span></div><div class="value" id="statConnections">0</div><div class="change" id="statConnectionsChange"></div></div>
+                    <div class="stat-card"><div class="top-row"><span class="label"><i class="fas fa-ticket-alt"></i> Open Tickets</span><span class="icon-circle"><i class="fas fa-ticket"></i></span></div><div class="value" id="statTickets">0</div><div class="change" id="statTicketsChange"></div></div>
+                    <div class="stat-card"><div class="top-row"><span class="label"><i class="fas fa-dollar-sign"></i> Revenue (paid)</span><span class="icon-circle"><i class="fas fa-coins"></i></span></div><div class="value" id="statRevenue">$0</div><div class="change" id="statRevenueChange"></div></div>
+                </div>
+
+                <div class="charts-row">
+                    <div class="chart-card">
+                        <div class="chart-header"><h3>Revenue Trend</h3><span class="sub">Last 6 months · paid invoices</span></div>
+                        <div class="chart-container"><canvas id="revenueChart"></canvas></div>
+                    </div>
+                    <div class="chart-card">
+                        <div class="chart-header"><h3>Package Distribution</h3><span class="sub">Active subscribers</span></div>
+                        <div class="chart-container"><canvas id="packageChart"></canvas></div>
+                    </div>
+                </div>
+
+                <div class="dash-grid">
+                    <div class="card">
+                        <div class="card-header"><h3>Recent Payments</h3></div>
+                        <div class="table-wrap">
+                            <table>
+                                <thead><tr><th>Invoice</th><th>Customer</th><th>Amount</th><th>Date</th><th>Status</th></tr></thead>
+                                <tbody id="recentPayments"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <div class="card">
+                        <div class="card-header"><h3>System Snapshot</h3></div>
+                        <div class="snapshot-list">
+                            <div><span class="text-muted">Active Packages</span><strong id="snapPackages">0</strong></div>
+                            <div><span class="text-muted">Pending Invoices</span><strong id="snapPending">0</strong></div>
+                            <div><span class="text-muted">Open Tickets</span><strong id="snapOpenTickets">0</strong></div>
+                            <div><span class="text-muted">Staff Members</span><strong id="snapStaff">0</strong></div>
+                            <div><span class="text-muted">Revenue YTD</span><strong id="snapRevenueYTD">$0</strong></div>
+                            <div><span class="text-muted">System Status</span><strong id="systemStatus" style="color:var(--success);">● Operational</strong></div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="page" id="page-customers">
+                <div class="toolbar">
+                    <div class="toolbar-left">
+                        <div class="search-bar">
+                            <i class="fas fa-search"></i>
+                            <input type="search" id="customerSearch" placeholder="Search by name, email or IP..." aria-label="Search customers" />
+                        </div>
+                        <div class="filter-group">
+                            <select id="filterPackage" aria-label="Filter by package"><option value="">All Packages</option></select>
+                            <select id="filterStatus" aria-label="Filter by status">
+                                <option value="">All Status</option>
+                                <option value="active">Active</option>
+                                <option value="inactive">Inactive</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="toolbar-right">
+                        <button class="btn btn-outline btn-sm" id="exportCsvBtn"><i class="fas fa-file-csv"></i> Export</button>
+                        <button class="btn btn-outline btn-sm" id="bulkImportBtn"><i class="fas fa-upload"></i> Import</button>
+                        <button class="btn" id="btnAddCustomer"><i class="fas fa-plus"></i> Add Customer</button>
+                    </div>
+                </div>
+
+                <div class="bulk-actions-bar" id="bulkActionsBar">
+                    <span class="count" id="bulkCount">0 selected</span>
+                    <div class="actions">
+                        <button class="btn btn-sm btn-danger" id="bulkDeleteBtn"><i class="fas fa-trash"></i> Delete Selected</button>
+                        <button class="btn btn-sm btn-outline" id="bulkClearBtn"><i class="fas fa-times"></i> Clear</button>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="table-wrap">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th class="checkbox-cell"><input type="checkbox" id="selectAllCustomers" aria-label="Select all" /></th>
+                                    <th>Customer</th><th>Contact</th><th>Package</th><th>IP Address</th>
+                                    <th>Data Used</th><th>Status</th><th>Connection</th><th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="customerTableBody"></tbody>
+                        </table>
+                    </div>
+                    <div class="pagination" id="customerPagination"></div>
+                </div>
+            </section>
+
+            <section class="page" id="page-packages">
+                <div class="toolbar toolbar--end">
+                    <div class="toolbar-right"><button class="btn" id="btnAddPackage"><i class="fas fa-plus"></i> Create Package</button></div>
+                </div>
+                <div class="pkg-grid" id="packageGrid"></div>
+            </section>
+
+            <section class="page" id="page-billing">
+                <div class="toolbar">
+                    <div class="toolbar-left">
+                        <div class="search-bar">
+                            <i class="fas fa-search"></i>
+                            <input type="search" id="billingSearch" placeholder="Search invoices..." aria-label="Search invoices" />
+                        </div>
+                        <div class="filter-group">
+                            <select id="filterInvoiceStatus" aria-label="Filter invoices by status">
+                                <option value="">All Status</option>
+                                <option value="paid">Paid</option>
+                                <option value="partial">Partially paid</option>
+                                <option value="unpaid">Unpaid</option>
+                                <option value="overdue">Overdue</option>
+                            </select>
+                            <input type="date" id="filterInvoiceFrom" aria-label="Invoices from date" />
+                            <input type="date" id="filterInvoiceTo" aria-label="Invoices to date" />
+                        </div>
+                    </div>
+                    <div class="toolbar-right">
+                        <button class="btn btn-outline btn-sm" id="exportInvoicesBtn"><i class="fas fa-file-csv"></i> Export CSV</button>
+                        <button class="btn" id="btnAddInvoice"><i class="fas fa-plus"></i> New Invoice</button>
+                    </div>
+                </div>
+
+                <div class="bulk-actions-bar" id="bulkInvoiceBar">
+                    <span class="count" id="bulkInvoiceCount">0 selected</span>
+                    <div class="actions">
+                        <button class="btn btn-sm btn-outline" id="bulkInvoicePayBtn"><i class="fas fa-money-bill-wave"></i> Mark paid</button>
+                        <button class="btn btn-sm btn-danger" id="bulkInvoiceDeleteBtn"><i class="fas fa-trash"></i> Delete</button>
+                        <button class="btn btn-sm btn-outline" id="bulkInvoiceClearBtn"><i class="fas fa-times"></i> Clear</button>
+                    </div>
+                </div>
+
+                <div class="stats-grid" style="grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));">
+                    <div class="stat-card"><div class="top-row"><span class="label">Collected</span></div><div class="value" id="billCollected">$0</div></div>
+                    <div class="stat-card"><div class="top-row"><span class="label">Outstanding</span></div><div class="value" id="billOutstanding">$0</div></div>
+                    <div class="stat-card"><div class="top-row"><span class="label">Overdue</span></div><div class="value" id="billOverdue">$0</div></div>
+                    <div class="stat-card"><div class="top-row"><span class="label">Invoices</span></div><div class="value" id="billCount">0</div></div>
+                </div>
+
+                <div class="card">
+                    <div class="table-wrap">
+                        <table>
+                            <thead><tr><th class="checkbox-cell"><input type="checkbox" id="selectAllInvoices" aria-label="Select all invoices" /></th><th>Invoice #</th><th>Customer</th><th>Amount</th><th>Issued</th><th>Due</th><th>Status</th><th>Actions</th></tr></thead>
+                            <tbody id="billingTableBody"></tbody>
+                        </table>
+                    </div>
+                    <div class="pagination" id="billingPagination"></div>
+                </div>
+            </section>
+
+            <section class="page" id="page-tickets">
+                <div class="toolbar">
+                    <div class="toolbar-left">
+                        <div class="search-bar">
+                            <i class="fas fa-search"></i>
+                            <input type="search" id="ticketSearch" placeholder="Search tickets, customers, assignees..." aria-label="Search tickets" />
+                        </div>
+                        <div class="filter-group">
+                            <select id="filterTicketStatus" aria-label="Filter tickets by status">
+                                <option value="">All Status</option>
+                                <option value="open">Open</option>
+                                <option value="in-progress">In Progress</option>
+                                <option value="closed">Closed</option>
+                            </select>
+                            <select id="filterTicketPriority" aria-label="Filter tickets by priority">
+                                <option value="">All Priority</option>
+                                <option value="high">High</option>
+                                <option value="medium">Medium</option>
+                                <option value="low">Low</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="toolbar-right"><button class="btn" id="btnAddTicket"><i class="fas fa-plus"></i> New Ticket</button></div>
+                </div>
+
+                <div class="bulk-actions-bar" id="bulkTicketBar">
+                    <span class="count" id="bulkTicketCount">0 selected</span>
+                    <div class="actions">
+                        <select id="bulkAssignSelect" aria-label="Assign selected tickets"></select>
+                        <button class="btn btn-sm btn-outline" id="bulkAssignBtn"><i class="fas fa-user-check"></i> Assign</button>
+                        <button class="btn btn-sm btn-outline" id="bulkCloseBtn"><i class="fas fa-circle-check"></i> Close</button>
+                        <button class="btn btn-sm btn-outline" id="bulkTicketClearBtn"><i class="fas fa-times"></i> Clear</button>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="table-wrap">
+                        <table>
+                            <thead><tr><th class="checkbox-cell"></th><th>Ticket</th><th>Customer</th><th>Subject</th><th>Priority</th><th>Status</th><th>SLA</th><th>Actions</th></tr></thead>
+                            <tbody id="ticketTableBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <section class="page" id="page-staff">
+                <div class="toolbar toolbar--end">
+                    <div class="toolbar-right"><button class="btn" id="btnAddStaff"><i class="fas fa-plus"></i> Add Staff</button></div>
+                </div>
+                <div class="card">
+                    <div class="table-wrap">
+                        <table>
+                            <thead><tr><th>Name</th><th>Email</th><th>Phone</th><th>Role</th><th>Status</th><th>Actions</th></tr></thead>
+                            <tbody id="staffTableBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <section class="page" id="page-network-ops">
+                <div class="net-header">
+                    <span class="net-status-pill" id="netStatusPill"></span>
+                </div>
+
+                <div class="stats-grid" style="grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));">
+                    <div class="stat-card"><div class="top-row"><span class="label">Devices</span><span class="icon-circle"><i class="fas fa-network-wired"></i></span></div><div class="value" id="netDevices">0</div><div class="change" id="netDevicesChange"></div></div>
+                    <div class="stat-card"><div class="top-row"><span class="label">IP Pool Usage</span><span class="icon-circle"><i class="fas fa-address-book"></i></span></div><div class="value" id="netIPUsage">0%</div><div class="change" id="netIPChange"></div></div>
+                    <div class="stat-card"><div class="top-row"><span class="label">Active Outages</span><span class="icon-circle"><i class="fas fa-bell"></i></span></div><div class="value" id="netOutages">0</div><div class="change" id="netOutageStatus"></div></div>
+                    <div class="stat-card"><div class="top-row"><span class="label">Bandwidth Used</span><span class="icon-circle"><i class="fas fa-chart-line"></i></span></div><div class="value" id="netBandwidth">0%</div><div class="change" id="netBandwidthChange"></div></div>
+                </div>
+
+                <div class="tab-bar" role="tablist">
+                    <button class="btn btn-sm btn-outline active" data-net-tab="topology"><i class="fas fa-sitemap"></i> Topology</button>
+                    <button class="btn btn-sm btn-outline" data-net-tab="ip-pool"><i class="fas fa-address-book"></i> IP Pool</button>
+                    <button class="btn btn-sm btn-outline" data-net-tab="routers"><i class="fas fa-server"></i> Routers/ONU</button>
+                    <button class="btn btn-sm btn-outline" data-net-tab="bandwidth"><i class="fas fa-chart-area"></i> Bandwidth</button>
+                    <button class="btn btn-sm btn-outline" data-net-tab="outages"><i class="fas fa-exclamation-triangle"></i> Outages</button>
+                </div>
+
+                <div class="tab-content active" id="net-tab-topology">
+                    <div class="card">
+                        <div class="card-header">
+                            <h3>Network Topology</h3>
+                            <div class="topo-legend">
+                                <span><span class="status-dot online"></span> Online</span>
+                                <span><span class="status-dot offline"></span> Offline</span>
+                                <span class="topo-count" id="topologyCount"></span>
+                            </div>
+                        </div>
+                        <div class="topology-container" id="topologyContainer"></div>
+                    </div>
+                </div>
+
+                <div class="tab-content" id="net-tab-ip-pool">
+                    <div class="card">
+                        <div class="card-header">
+                            <h3>IP Address Pool</h3>
+                            <button class="btn btn-sm btn-outline" id="refreshIPPoolBtn"><i class="fas fa-sync"></i> Refresh</button>
+                        </div>
+                        <div class="ip-summary">
+                            <div class="cell"><div class="k">Total IPs</div><div class="v" id="ipTotal">0</div></div>
+                            <div class="cell"><div class="k">Available</div><div class="v success" id="ipAvailable">0</div></div>
+                            <div class="cell"><div class="k">Assigned</div><div class="v warning" id="ipAssigned">0</div></div>
+                        </div>
+                        <div class="ip-pool-grid" id="ipPoolGrid"></div>
+                    </div>
+                </div>
+
+                <div class="tab-content" id="net-tab-routers">
+                    <div class="card">
+                        <div class="card-header">
+                            <h3>Router / ONU Status</h3>
+                            <div class="action-group">
+                                <button class="btn btn-sm btn-outline" id="refreshRoutersBtn"><i class="fas fa-sync"></i> Refresh</button>
+                                <button class="btn btn-sm" id="btnAddDevice"><i class="fas fa-plus"></i> Add Device</button>
+                            </div>
+                        </div>
+                        <div class="table-wrap">
+                            <table>
+                                <thead><tr><th>Device</th><th>Type</th><th>MAC Address</th><th>Firmware</th><th>Uptime</th><th>Status</th><th>Actions</th></tr></thead>
+                                <tbody id="routerTableBody"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="tab-content" id="net-tab-bandwidth">
+                    <div class="card">
+                        <div class="card-header"><h3>Bandwidth Usage</h3><span class="sub text-muted" id="bandwidthCapLabel">Monthly cap: 500 GB</span></div>
+                        <div class="bandwidth-figures">
+                            <div class="figure"><div class="k">Total Used</div><div class="v" id="bandwidthTotal">0 GB</div><div class="s" id="bandwidthPercent">0% of cap</div></div>
+                            <div class="figure"><div class="k">Monthly Cap</div><div class="v" id="bandwidthCap">500 GB</div><div class="s"><span id="bandwidthRemaining">500 GB</span> remaining</div></div>
+                        </div>
+                        <div class="progress-track"><div class="progress-fill" id="bandwidthBar"></div></div>
+                        <div class="chart-container" style="height:180px; margin-top:16px;"><canvas id="bandwidthUsageChart"></canvas></div>
+                        <div class="bandwidth-legend">
+                            <span><span style="color:var(--success);">●</span> Daily usage</span>
+                            <span><span style="color:var(--warning);">●</span> Warning at 80%</span>
+                            <span><span style="color:var(--danger);">●</span> Cap at 100%</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="tab-content" id="net-tab-outages">
+                    <div class="card">
+                        <div class="card-header">
+                            <h3>Service Outage Dashboard</h3>
+                            <div class="action-group">
+                                <span class="sub text-muted" id="outageSummary">No active outages</span>
+                                <button class="btn btn-sm" id="btnAddOutage"><i class="fas fa-plus"></i> Report Outage</button>
+                            </div>
+                        </div>
+                        <div id="outageList"></div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="page" id="page-reports">
+                <div class="toolbar">
+                    <div class="toolbar-left">
+                        <div class="filter-group">
+                            <select id="reportRange" aria-label="Report period">
+                                <option value="6">Last 6 months</option>
+                                <option value="3">Last 3 months</option>
+                                <option value="12">Last 12 months</option>
+                            </select>
+                        </div>
+                        <span class="page-note" id="reportPeriodNote"></span>
+                    </div>
+                    <div class="toolbar-right">
+                        <button class="btn btn-outline btn-sm" id="exportReportCsv"><i class="fas fa-file-csv"></i> Export CSV</button>
+                        <button class="btn btn-outline btn-sm" id="printReportBtn"><i class="fas fa-print"></i> Printable statement</button>
+                        <button class="btn btn-outline btn-sm" id="exportReportPdf"><i class="fas fa-file-pdf"></i> Export PDF Report</button>
+                    </div>
+                </div>
+
+                <div class="stats-grid report-stats" style="grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));">
+                    <div class="stat-card"><div class="top-row"><span class="label">Collection rate</span></div><div class="value" id="reportCollection">0%</div><div class="change">Paid vs billed</div></div>
+                    <div class="stat-card"><div class="top-row"><span class="label">Churn rate</span></div><div class="value" id="reportChurn">0%</div><div class="change">Inactive subscribers</div></div>
+                    <div class="stat-card"><div class="top-row"><span class="label">Active subscribers</span></div><div class="value" id="reportActive">0</div><div class="change" id="reportActiveNote"></div></div>
+                    <div class="stat-card"><div class="top-row"><span class="label">Avg. ticket age</span></div><div class="value" id="reportTicketAge">0h</div><div class="change">Open tickets</div></div>
+                </div>
+
+                <div class="stats-grid report-stats">
+                    <div class="stat-card"><div class="top-row"><span class="label"><i class="fas fa-dollar-sign"></i> Total Revenue</span><span class="icon-circle"><i class="fas fa-coins"></i></span></div><div class="value" id="reportTotalRevenue">$0</div><div class="change" id="reportRevenueChange"></div></div>
+                    <div class="stat-card"><div class="top-row"><span class="label"><i class="fas fa-users"></i> Customers</span><span class="icon-circle"><i class="fas fa-user-plus"></i></span></div><div class="value" id="reportCustomerGrowth">0</div><div class="change" id="reportGrowthChange"></div></div>
+                    <div class="stat-card"><div class="top-row"><span class="label"><i class="fas fa-chart-line"></i> MRR</span><span class="icon-circle"><i class="fas fa-calculator"></i></span></div><div class="value" id="reportMrr">$0</div><div class="change">Monthly recurring revenue</div></div>
+                    <div class="stat-card"><div class="top-row"><span class="label"><i class="fas fa-hand-holding-dollar"></i> ARPU</span><span class="icon-circle"><i class="fas fa-scale-balanced"></i></span></div><div class="value" id="reportArpu">$0</div><div class="change">Avg. revenue per user</div></div>
+                </div>
+
+                <div class="charts-row">
+                    <div class="chart-card"><div class="chart-header"><h3>Revenue Over Time</h3><span class="sub">Monthly</span></div><div class="chart-container"><canvas id="revenueReportChart"></canvas></div></div>
+                    <div class="chart-card"><div class="chart-header"><h3>Customer Growth</h3><span class="sub">New subscribers</span></div><div class="chart-container"><canvas id="growthReportChart"></canvas></div></div>
+                </div>
+
+                <div class="charts-row">
+                    <div class="chart-card"><div class="chart-header"><h3>Ticket Volume</h3><span class="sub">Created vs resolved</span></div><div class="chart-container"><canvas id="ticketReportChart"></canvas></div></div>
+                    <div class="chart-card"><div class="chart-header"><h3>Bandwidth by Node</h3><span class="sub">Current month</span></div><div class="chart-container"><canvas id="nodeReportChart"></canvas></div></div>
+                </div>
+
+                <div class="charts-row">
+                    <div class="card">
+                        <div class="card-header"><h3>Revenue by Package</h3></div>
+                        <div class="table-wrap">
+                            <table>
+                                <thead><tr><th>Package</th><th>Subscribers</th><th>Billed</th><th>Collected</th><th>Collection</th></tr></thead>
+                                <tbody id="reportPackageBody"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <div class="card">
+                        <div class="card-header"><h3>Staff Performance</h3></div>
+                        <div class="table-wrap">
+                            <table>
+                                <thead><tr><th>Staff</th><th>Assigned</th><th>Resolved</th><th>Open</th><th>Avg. resolve</th></tr></thead>
+                                <tbody id="reportStaffBody"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header"><h3>Revenue by Node</h3></div>
+                    <div class="table-wrap">
+                        <table>
+                            <thead><tr><th>Node</th><th>Subscribers</th><th>Billed</th><th>Collected</th><th>Collection</th></tr></thead>
+                            <tbody id="reportNodeBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <section class="page" id="page-map">
+                <div class="toolbar toolbar--end">
+                    <div class="toolbar-right text-muted" style="font-size:13px;"><i class="fas fa-map-pin"></i> Live subscriber positions</div>
+                </div>
+                <div class="card">
+                    <div id="customerMap"></div>
+                    <div class="map-legend">
+                        <span><span class="dot" style="background:var(--success);"></span> Online</span>
+                        <span><span class="dot" style="background:var(--danger);"></span> Offline</span>
+                        <span><span class="dot" style="background:var(--warning);"></span> Inactive</span>
+                    </div>
+                </div>
+            </section>
+
+            <section class="page" id="page-help">
+                <div class="toolbar toolbar--end">
+                    <div class="toolbar-right">
+                        <div class="search-bar" style="min-width:180px;">
+                            <i class="fas fa-search"></i>
+                            <input type="search" id="helpSearch" placeholder="Search FAQs..." aria-label="Search FAQs" />
+                        </div>
+                    </div>
+                </div>
+                <div class="card" id="faqContainer"></div>
+            </section>
+
+            <section class="page" id="page-activity">
+                <div class="toolbar">
+                    <div class="toolbar-left">
+                        <span class="badge-count" id="logCount">0</span>
+                        <span class="page-note">Newest first</span>
+                    </div>
+                    <div class="toolbar-right">
+                        <button class="btn btn-outline btn-sm" id="exportLogsBtn"><i class="fas fa-download"></i> Export</button>
+                        <button class="btn btn-outline btn-sm" id="clearLogsBtn"><i class="fas fa-trash"></i> Clear Logs</button>
+                    </div>
+                </div>
+                <div class="card">
+                    <div class="table-wrap">
+                        <table>
+                            <thead><tr><th>Time</th><th>User</th><th>Action</th><th>Details</th></tr></thead>
+                            <tbody id="activityLogBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <section class="page" id="page-settings">
+                <div class="toolbar toolbar--end">
+                    <div class="toolbar-right">
+                        <span class="page-note" id="settingsSyncNote"><i class="fas fa-circle-check"></i> Server sync active</span>
+                        <button class="btn btn-sm btn-outline" id="settingsRefreshBtn"><i class="fas fa-sync"></i> Refresh</button>
+                    </div>
+                </div>
+
+                <div class="settings-grid">
+                    <div class="card settings-card">
+                        <div class="card-header"><h3><i class="fas fa-building"></i> Company profile</h3></div>
+                        <div class="settings-body">
+                            <div class="form-group">
+                                <label for="setCompanyName">Company name</label>
+                                <input id="setCompanyName" type="text" />
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="setSupportEmail">Support email</label>
+                                    <input id="setSupportEmail" type="email" placeholder="support@example.com" />
+                                </div>
+                                <div class="form-group">
+                                    <label for="setSupportPhone">Support phone</label>
+                                    <input id="setSupportPhone" type="text" placeholder="+977 ..." />
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label for="setAddress">Office address</label>
+                                <input id="setAddress" type="text" placeholder="Kathmandu, Nepal" />
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card settings-card">
+                        <div class="card-header"><h3><i class="fas fa-file-invoice-dollar"></i> Billing preferences</h3></div>
+                        <div class="settings-body">
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="setMonthlyCap">Monthly data cap (GB)</label>
+                                    <input id="setMonthlyCap" type="number" min="1" step="1" />
+                                </div>
+                                <div class="form-group">
+                                    <label for="setDueDays">Invoice due in (days)</label>
+                                    <input id="setDueDays" type="number" min="1" max="90" step="1" />
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="setGraceDays">Grace period (days)</label>
+                                    <input id="setGraceDays" type="number" min="0" max="30" step="1" />
+                                </div>
+                                <div class="form-group">
+                                    <label for="setReminderDays">Reminder lead time (days)</label>
+                                    <input id="setReminderDays" type="number" min="0" max="30" step="1" />
+                                </div>
+                            </div>
+                            <label class="switch-row">
+                                <span><strong>Automatic monthly billing</strong><span>Generate invoices for active subscribers on the first visit each month.</span></span>
+                                <input type="checkbox" id="setAutoBilling" />
+                            </label>
+                            <label class="switch-row">
+                                <span><strong>Send payment reminders</strong><span>Queue simulated email reminders for unpaid invoices.</span></span>
+                                <input type="checkbox" id="setSendReminders" />
+                            </label>
+                            <button class="btn btn-sm" id="saveSettingsBtn"><i class="fas fa-save"></i> Save preferences</button>
+                        </div>
+                    </div>
+
+                    <div class="card settings-card">
+                        <div class="card-header"><h3><i class="fas fa-lock"></i> Security</h3></div>
+                        <div class="settings-body">
+                            <div class="security-status" id="twoFactorStatus"></div>
+                            <div class="settings-actions">
+                                <button class="btn btn-sm btn-outline" id="setup2faBtn"><i class="fas fa-shield-halved"></i> Set up 2FA</button>
+                                <button class="btn btn-sm btn-outline" id="changePasswordBtn"><i class="fas fa-key"></i> Change password</button>
+                                <button class="btn btn-sm btn-outline" id="revokeSessionsBtn"><i class="fas fa-right-from-bracket"></i> Revoke other sessions</button>
+                            </div>
+                            <div class="field-hint" id="twoFactorHint">Authenticator codes are verified by the server with TOTP.</div>
+                            <div class="session-list" id="sessionList"></div>
+                        </div>
+                    </div>
+
+                    <div class="card settings-card">
+                        <div class="card-header"><h3><i class="fas fa-plug"></i> Payment gateways & notifications</h3></div>
+                        <div class="settings-body">
+                            <div class="gateway-grid">
+                                <label class="gateway-card">
+                                    <input type="checkbox" id="setEsewa" />
+                                    <span class="gateway-logo esewa">eSewa</span>
+                                    <span class="gateway-meta">Sandbox · Nepal</span>
+                                </label>
+                                <label class="gateway-card">
+                                    <input type="checkbox" id="setKhalti" />
+                                    <span class="gateway-logo khalti">Khalti</span>
+                                    <span class="gateway-meta">Sandbox · Nepal</span>
+                                </label>
+                                <label class="gateway-card">
+                                    <input type="checkbox" id="setStripe" />
+                                    <span class="gateway-logo stripe">Stripe</span>
+                                    <span class="gateway-meta">Sandbox · Cards</span>
+                                </label>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="setGatewayMode">Gateway mode</label>
+                                    <select id="setGatewayMode">
+                                        <option value="sandbox">Sandbox (simulated)</option>
+                                        <option value="live">Live keys configured</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="setReminderChannel">Reminder channel</label>
+                                    <select id="setReminderChannel">
+                                        <option value="email">Email</option>
+                                        <option value="sms">SMS</option>
+                                        <option value="both">Email + SMS</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label for="setFromName">Email sender name</label>
+                                <input id="setFromName" type="text" placeholder="NetSphere Billing" />
+                            </div>
+                            <div class="field-hint"><i class="fas fa-circle-info"></i> No live gateway keys are set. Payments run through the sandbox simulator and are marked as demo transactions.</div>
+                            <button class="btn btn-sm" id="saveIntegrationsBtn"><i class="fas fa-save"></i> Save integrations</button>
+                        </div>
+                    </div>
+
+                    <div class="card settings-card settings-card--wide">
+                        <div class="card-header">
+                            <h3><i class="fas fa-database"></i> Backups & data</h3>
+                            <div class="action-group">
+                                <button class="btn btn-sm btn-outline" id="exportSnapshotBtn"><i class="fas fa-download"></i> Download snapshot</button>
+                                <button class="btn btn-sm btn-outline" id="importSnapshotBtn"><i class="fas fa-upload"></i> Restore file</button>
+                                <button class="btn btn-sm" id="createBackupBtn"><i class="fas fa-server"></i> Server backup</button>
+                            </div>
+                        </div>
+                        <div class="settings-body">
+                            <input type="file" id="snapshotFileInput" accept="application/json,.json" hidden />
+                            <div class="table-wrap">
+                                <table>
+                                    <thead><tr><th>Backup</th><th>Trigger</th><th>Created</th><th>Size</th><th>Actions</th></tr></thead>
+                                    <tbody id="backupTableBody"></tbody>
+                                </table>
+                            </div>
+                            <div class="danger-zone">
+                                <div><strong>Reset demo workspace</strong><span>Replaces all customers, invoices, tickets and logs with the original demo dataset. A backup is created first.</span></div>
+                                <button class="btn btn-sm btn-danger" id="resetWorkspaceBtn"><i class="fas fa-rotate-left"></i> Reset data</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card settings-card settings-card--wide">
+                        <div class="card-header">
+                            <h3><i class="fas fa-envelope"></i> Notification outbox</h3>
+                            <span class="sub text-muted">Simulated deliveries — no external provider configured</span>
+                        </div>
+                        <div class="table-wrap">
+                            <table>
+                                <thead><tr><th>Time</th><th>Channel</th><th>Recipient</th><th>Subject</th><th>Status</th></tr></thead>
+                                <tbody id="outboxTableBody"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ============ CUSTOMER PAGES ============ -->
+
+            <section class="page" id="page-c-dashboard">
+                <div class="stats-grid">
+                    <div class="stat-card"><div class="top-row"><span class="label"><i class="fas fa-box"></i> My Package</span><span class="icon-circle"><i class="fas fa-wifi"></i></span></div><div class="value" id="cPkgName">-</div><div class="change" id="cPkgSpeed">-</div></div>
+                    <div class="stat-card"><div class="top-row"><span class="label"><i class="fas fa-credit-card"></i> Amount Due</span><span class="icon-circle"><i class="fas fa-dollar-sign"></i></span></div><div class="value" id="cDueAmount">$0</div><div class="change" id="cDueStatus">Up to date</div></div>
+                    <div class="stat-card"><div class="top-row"><span class="label"><i class="fas fa-ticket-alt"></i> My Tickets</span><span class="icon-circle"><i class="fas fa-ticket"></i></span></div><div class="value" id="cTicketCount">0</div><div class="change" id="cTicketStatus">Open</div></div>
+                    <div class="stat-card"><div class="top-row"><span class="label"><i class="fas fa-database"></i> Data Used</span><span class="icon-circle"><i class="fas fa-cloud"></i></span></div><div class="value" id="cDataUsed">0 GB</div><div class="change" id="cDataPercent">0%</div></div>
+                </div>
+
+                <div class="card welcome-card">
+                    <div class="card-header"><h3>Welcome back, <span id="cWelcomeName">Customer</span></h3></div>
+                    <p>Your current package is <strong id="cWelcomePkg">-</strong>.
+                       You have <strong id="cWelcomePending">0</strong> pending invoice(s).</p>
+                </div>
+
+                <div class="grid-2">
+                    <div class="card">
+                        <div class="card-header"><h3>Bandwidth Usage (Last 7 Days)</h3></div>
+                        <div class="chart-container" style="height:200px;"><canvas id="bandwidthChart"></canvas></div>
+                    </div>
+                    <div class="card">
+                        <div class="card-header"><h3>Recent Activity</h3></div>
+                        <div class="table-wrap">
+                            <table>
+                                <thead><tr><th>Date</th><th>Event</th><th>Status</th></tr></thead>
+                                <tbody id="cRecentActivity"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="page" id="page-c-profile">
+                <div class="grid-2">
+                    <div class="card">
+                        <div class="card-header">
+                            <h3>My Profile</h3>
+                            <button class="btn btn-sm btn-outline" id="editProfileBtn"><i class="fas fa-pen"></i> Edit profile</button>
+                        </div>
+                        <div class="kv-list" id="cProfileList"></div>
+                    </div>
+                    <div class="card">
+                        <div class="card-header"><h3>Subscription</h3></div>
+                        <div class="kv-list" id="cSubscriptionList"></div>
+                        <button class="btn btn-outline" id="changePackageBtn" style="margin-top:12px;"><i class="fas fa-edit"></i> Request package change</button>
+                    </div>
+                </div>
+
+                <div class="grid-2">
+                    <div class="card">
+                        <div class="card-header"><h3>Usage history</h3><span class="sub text-muted">Last 6 billing cycles</span></div>
+                        <div id="cCapWarning"></div>
+                        <div class="table-wrap">
+                            <table>
+                                <thead><tr><th>Cycle</th><th>Usage</th><th>Cap</th><th>Status</th></tr></thead>
+                                <tbody id="cUsageHistory"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <div class="card">
+                        <div class="card-header"><h3>Notification preferences</h3></div>
+                        <div class="settings-body">
+                            <label class="switch-row">
+                                <span><strong>Email notifications</strong><span>Invoices, receipts and service updates.</span></span>
+                                <input type="checkbox" id="prefEmail" />
+                            </label>
+                            <label class="switch-row">
+                                <span><strong>SMS alerts</strong><span>Critical outages and payment reminders.</span></span>
+                                <input type="checkbox" id="prefSms" />
+                            </label>
+                            <label class="switch-row">
+                                <span><strong>Invoice reminders</strong><span>Notify me before an invoice is due.</span></span>
+                                <input type="checkbox" id="prefInvoices" />
+                            </label>
+                            <label class="switch-row">
+                                <span><strong>Outage alerts</strong><span>Notify me about maintenance and outages.</span></span>
+                                <input type="checkbox" id="prefOutages" />
+                            </label>
+                            <label class="switch-row">
+                                <span><strong>Ticket updates</strong><span>Replies and status changes on my tickets.</span></span>
+                                <input type="checkbox" id="prefTickets" />
+                            </label>
+                            <button class="btn btn-sm" id="savePrefsBtn"><i class="fas fa-save"></i> Save preferences</button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="page" id="page-c-payments">
+                <div class="card">
+                    <div class="card-header"><h3>My Payment History</h3></div>
+                    <div class="table-wrap">
+                        <table>
+                            <thead><tr><th>Invoice #</th><th>Amount</th><th>Issued</th><th>Due</th><th>Status</th><th>Action</th></tr></thead>
+                            <tbody id="cPaymentTable"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <section class="page" id="page-c-tickets">
+                <div class="card">
+                    <div class="card-header"><h3>My Support Tickets</h3></div>
+                    <div class="table-wrap">
+                        <table>
+                            <thead><tr><th>Ticket</th><th>Subject</th><th>Priority</th><th>Status</th><th>Created</th><th>Action</th></tr></thead>
+                            <tbody id="cTicketTable"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <section class="page" id="page-c-submit">
+                <div class="card">
+                    <div class="card-header"><h3>Submit a Ticket</h3></div>
+                    <form id="cTicketForm" novalidate>
+                        <div class="form-group">
+                            <label for="cNewTicketSubject">Subject</label>
+                            <input type="text" id="cNewTicketSubject" placeholder="Brief summary of your issue..." required />
+                            <div class="field-error" id="cTicketSubjectError">Please enter a subject.</div>
+                        </div>
+                        <div class="form-group">
+                            <label for="cNewTicketDescription">Description</label>
+                            <textarea id="cNewTicketDescription" rows="4" placeholder="Describe the problem in detail..."></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label for="cNewTicketPriority">Priority</label>
+                            <select id="cNewTicketPriority">
+                                <option value="low">Low</option>
+                                <option value="medium" selected>Medium</option>
+                                <option value="high">High</option>
+                            </select>
+                        </div>
+                        <button class="btn" type="submit"><i class="fas fa-paper-plane"></i> Submit Ticket</button>
+                    </form>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- ==================== GLOBAL SEARCH ==================== -->
+    <div class="command-overlay" id="globalSearchOverlay" role="dialog" aria-modal="true" aria-label="Search workspace">
+        <div class="command-box">
+            <div class="command-input">
+                <i class="fas fa-magnifying-glass"></i>
+                <input type="search" id="globalSearchInput" placeholder="Search customers, invoices, tickets, devices…" autocomplete="off" />
+                <kbd>Esc</kbd>
+            </div>
+            <div class="command-results" id="globalSearchResults"></div>
+            <div class="command-footer">
+                <span><kbd>Enter</kbd> open first result</span>
+                <span><kbd>Ctrl</kbd> + <kbd>K</kbd> toggle search</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== MODAL ==================== -->
+    <div class="modal-overlay" id="modalOverlay" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+        <div class="modal-box">
+            <h2 id="modalTitle">Add New</h2>
+            <div class="sub" id="modalSub">Fill in the details below.</div>
+            <div id="modalBody"></div>
+            <div class="modal-actions">
+                <button class="btn btn-outline" id="modalCancel" type="button">Cancel</button>
+                <button class="btn" id="modalConfirm" type="button">Save</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== TOAST ==================== -->
+    <div id="toastContainer" aria-live="polite"></div>
+
+    <!-- Boot watchdog + app entry -->
+    <script src="js/watchdog.js?v=2.0.0"></script>
+    <script type="module" src="js/app.js?v=2.0.0"></script>
+</body>
+</html>

@@ -1,0 +1,26 @@
+{
+    "name": "NetSphere Pro — ISP Management",
+    "short_name": "NetSphere",
+    "description": "Internet service provider management: subscribers, billing, network operations and support.",
+    "start_url": "/",
+    "scope": "/",
+    "display": "standalone",
+    "orientation": "any",
+    "background_color": "#0b1120",
+    "theme_color": "#6366f1",
+    "categories": ["business", "productivity", "utilities"],
+    "icons": [
+        {
+            "src": "/assets/icon.svg",
+            "sizes": "any",
+            "type": "image/svg+xml",
+            "purpose": "any"
+        },
+        {
+            "src": "/assets/icon.svg",
+            "sizes": "any",
+            "type": "image/svg+xml",
+            "purpose": "maskable"
+        }
+    ]
+}

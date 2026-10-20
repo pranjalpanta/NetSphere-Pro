@@ -1,0 +1,23 @@
+services:
+    netsphere:
+        build: .
+        image: netsphere-pro:2.0.0
+        container_name: netsphere-pro
+        restart: unless-stopped
+        ports:
+            - "5173:5173"
+        environment:
+            PORT: "5173"
+            NETSPHERE_DB: /app/data/netsphere.db
+            NETSPHERE_DEMO: "1"
+        volumes:
+            - netsphere-data:/app/data
+        healthcheck:
+            test: ["CMD", "wget", "-qO-", "http://127.0.0.1:5173/api/health"]
+            interval: 30s
+            timeout: 5s
+            retries: 3
+            start_period: 10s
+
+volumes:
+    netsphere-data:
